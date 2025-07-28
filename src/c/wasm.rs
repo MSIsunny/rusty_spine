@@ -119,13 +119,20 @@ impl Allocator {
 
     #[allow(dead_code)]
     pub unsafe fn size(&mut self, ptr: *const c_void) -> usize {
-        self.allocations.get(&ptr).unwrap().size()
+        let layout = self.allocations.get(&ptr);
+        if let Some(layout) = layout {
+            return layout.size();
+        } else {
+            return 0;
+        }
     }
 
     pub unsafe fn free(&mut self, ptr: *const c_void) {
         if !ptr.is_null() {
-            let layout = self.allocations.remove(&ptr).unwrap();
-            unsafe { std::alloc::dealloc(ptr as *mut u8, layout) };
+            let layout = self.allocations.remove(&ptr);
+            if let Some(layout) = layout {
+                unsafe { std::alloc::dealloc(ptr as *mut u8, layout) };
+            }
         }
     }
 
