@@ -10924,6 +10924,29 @@ unsafe extern "C" fn loadSequence(
     _spFree(path.cast::<c_void>());
     -(1 as c_int)
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn createAttachment_empty(name: *const i8) -> *mut spAttachment {
+    let attachment = spRegionAttachment_create(name);
+    (*attachment).rendererObject = std::ptr::null_mut();
+    let mut region: *mut spAtlasRegion = spAtlasRegion_create();
+
+    (*region).super_0.width = 0;
+    (*region).super_0.height = 0;
+    (*region).super_0.u = 0.0;
+    (*region).super_0.v = 0.0;
+    (*region).super_0.u2 = 1.0;
+    (*region).super_0.v2 = 1.0;
+    (*region).super_0.offsetX = 0.0;
+    (*region).super_0.offsetY = 0.0;
+    (*region).super_0.originalWidth = 0;
+    (*region).super_0.originalHeight = 0;
+    (*region).super_0.degrees = 0;
+
+    (*attachment).region = &mut (*region).super_0;
+    return &mut (*attachment).super_0;
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn _spAtlasAttachmentLoader_createAttachment(
     mut loader: *mut spAttachmentLoader,
@@ -10951,13 +10974,14 @@ pub unsafe extern "C" fn _spAtlasAttachmentLoader_createAttachment(
             } else {
                 let mut region: *mut spAtlasRegion = spAtlas_findRegion((*self_0).atlas, path);
                 if region.is_null() {
-                    spAttachment_dispose(&mut (*attachment).super_0);
-                    _spAttachmentLoader_setError(
-                        loader,
-                        (b"Region not found: \0" as *const u8).cast::<c_char>(),
-                        path,
-                    );
-                    return std::ptr::null_mut::<spAttachment>();
+                    // spAttachment_dispose(&mut (*attachment).super_0);
+                    // _spAttachmentLoader_setError(
+                    //     loader,
+                    //     (b"Region not found: \0" as *const u8).cast::<c_char>(),
+                    //     path,
+                    // );
+                    // return std::ptr::null_mut::<spAttachment>();
+                    return createAttachment_empty(name);
                 }
                 (*attachment).rendererObject = region.cast::<c_void>();
                 (*attachment).region = &mut (*region).super_0;
@@ -10980,12 +11004,13 @@ pub unsafe extern "C" fn _spAtlasAttachmentLoader_createAttachment(
             } else {
                 let mut region_0: *mut spAtlasRegion = spAtlas_findRegion((*self_0).atlas, path);
                 if region_0.is_null() {
-                    _spAttachmentLoader_setError(
-                        loader,
-                        (b"Region not found: \0" as *const u8).cast::<c_char>(),
-                        path,
-                    );
-                    return std::ptr::null_mut::<spAttachment>();
+                    // _spAttachmentLoader_setError(
+                    //     loader,
+                    //     (b"Region not found: \0" as *const u8).cast::<c_char>(),
+                    //     path,
+                    // );
+                    // return std::ptr::null_mut::<spAttachment>();
+                    return createAttachment_empty(name);
                 }
                 (*attachment_0).rendererObject = region_0.cast::<c_void>();
                 (*attachment_0).region = &mut (*region_0).super_0;
