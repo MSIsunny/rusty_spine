@@ -2,7 +2,7 @@ use std::ffi::{CStr, CString};
 use std::{path::Path, ptr::null_mut};
 
 use crate::c::{
-    spAtlasFilter, spAtlasFormat, spAtlasRegion, spAtlasWrap, spAtlas_createFromFile,
+    spAtlasFilter, spAtlasFormat, spAtlasRegion, spAtlasWrap, spAtlas_createFromFile, spAtlas_create_from_folder,
     spTextureRegion,
 };
 use crate::c_interface::{CTmpRef, NewFromPtr, SyncPtr};
@@ -100,6 +100,34 @@ impl Atlas {
         } else {
             Err(SpineError::FailedToReadFile {
                 file: path_str.to_owned(),
+            })
+        }
+    }
+
+    pub fn new_from_folder(
+        path: &str,
+    ) -> Result<
+        (
+            Atlas,
+            Box<std::collections::HashMap<String, image::DynamicImage>>,
+        ),
+        SpineError,
+    > {
+        let path = path.to_string();
+        let atlas_and_imgs = unsafe { spAtlas_create_from_folder(&path) };
+
+        let c_atlas = atlas_and_imgs.atlas;
+        let imgs = unsafe { Box::from_raw(atlas_and_imgs.imgs) };
+
+        if !c_atlas.is_null() {
+            let atlas = Atlas {
+                c_atlas: SyncPtr(c_atlas),
+                owns_memory: true,
+            };
+            Ok((atlas, imgs))
+        } else {
+            Err(SpineError::FailedToReadFile {
+                file: path.to_string(),
             })
         }
     }
