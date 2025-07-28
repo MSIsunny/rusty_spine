@@ -10981,6 +10981,7 @@ pub unsafe extern "C" fn _spAtlasAttachmentLoader_createAttachment(
                     //     path,
                     // );
                     // return std::ptr::null_mut::<spAttachment>();
+                    // println!("createAttachment_empty");
                     return createAttachment_empty(name);
                 }
                 (*attachment).rendererObject = region.cast::<c_void>();
@@ -28314,9 +28315,7 @@ pub struct AtlasAndImages {
 pub unsafe extern "C" fn spAtlas_create_from_folder(dir: &String) -> AtlasAndImages {
     use image::GenericImageView;
 
-    let mut self_0: *mut spAtlas = std::ptr::null_mut::<spAtlas>();
-
-    self_0 = _spCalloc(
+    let self_0 = _spCalloc(
         1 as c_int as size_t,
         ::core::mem::size_of::<spAtlas>() as c_ulong,
         (b"spine.c\0" as *const u8).cast::<c_char>(),
