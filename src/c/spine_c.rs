@@ -28213,3 +28213,184 @@ type _IO_wide_data = u8;
 type _IO_codecvt = u8;
 type _IO_marker = u8;
 pub use crate::c::environment::types::*;
+
+// ---------------------------------------------------------------------------
+use std::collections::HashMap;
+
+struct FileOrFolder {
+    pub path: String,
+    pub is_dir: bool,
+    pub children: Vec<FileOrFolder>,
+}
+
+fn get_files_in_dir(dir: &str, max_depth: u32, depth: u32) -> Vec<FileOrFolder> {
+    let dir = std::path::Path::new(dir);
+    let mut files = vec![];
+
+    if !(dir.exists() && dir.is_dir()) {
+        return vec![];
+    }
+
+    let entries = dir.read_dir();
+    if let Ok(entries) = entries {
+        for entry in entries {
+            if let Ok(entry) = entry {
+                let path_buff = entry.path();
+                let path = path_buff.to_string_lossy().into_owned();
+
+                let mut file = FileOrFolder {
+                    path: path.clone(),
+                    is_dir: false,
+                    children: vec![],
+                };
+
+                if path_buff.is_dir() {
+                    file.is_dir = true;
+                    // depth limit
+                    if depth < max_depth {
+                        file.children = get_files_in_dir(&path, max_depth, depth + 1);
+                    }
+                }
+
+                files.push(file);
+            } else {
+                println!("file not found: {:?}", entry);
+            }
+        }
+    } else {
+        println!("Read dir error: {:?}", entries);
+    }
+
+    files
+}
+
+fn handle_region_name(frame_path: &str) -> String {
+    // 返回值应该为builds/build_name/symbol_name/frame_name
+    let mut name = frame_path.replace("\\", "/");
+    loop {
+        let builds_index = name.find("builds/").unwrap_or(0);
+        let region_name = &name[builds_index..];
+        if region_name == name {
+            break;
+        }
+        name = region_name.to_string();
+    }
+    let name = name.replace(".png", "");
+    name.to_string()
+}
+
+#[repr(C)]
+pub struct AtlasAndImages {
+    pub atlas: *mut spAtlas,
+    pub imgs: *mut HashMap<String, image::DynamicImage>,
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn spAtlas_create_from_folder(dir: &String) -> AtlasAndImages {
+    use image::GenericImageView;
+
+    let mut self_0: *mut spAtlas = std::ptr::null_mut::<spAtlas>();
+
+    self_0 = _spCalloc(
+        1 as c_int as size_t,
+        ::core::mem::size_of::<spAtlas>() as c_ulong,
+        (b"spine.c\0" as *const u8).cast::<c_char>(),
+        4468 as c_int,
+    ).cast::<spAtlas>();
+
+    (*self_0).rendererObject = std::ptr::null_mut();
+
+    let mut lastPage: *mut spAtlasPage = 0 as *mut spAtlasPage;
+    let mut lastRegion: *mut spAtlasRegion = 0 as *mut spAtlasRegion;
+
+    let mut index = 0;
+    let mut imgs: HashMap<String, image::DynamicImage> = HashMap::new();
+
+    let build_paths: Vec<FileOrFolder> = get_files_in_dir(dir, 2, 0);
+    build_paths.iter().for_each(|build_path| {
+        build_path.children.iter().for_each(|symbol_path| {
+            for frame_path in symbol_path.children.iter() {
+                let frame_path = frame_path.path.clone();
+                if !frame_path.ends_with(".png") {
+                    continue;
+                }
+
+                // load image
+                let img = match image::open(&frame_path) {
+                    Ok(img) => img,
+                    Err(_) => {
+                        continue;
+                    }
+                };
+                let (width, height) = img.dimensions();
+
+                // get region name
+                let region_name = handle_region_name(&frame_path);
+                imgs.insert(region_name.clone(), img);
+
+                let region_name = std::ffi::CString::new(region_name).unwrap();
+
+                // create page
+                let page = spAtlasPage_create(self_0, region_name.as_ptr());
+
+                // link pages
+                if !lastPage.is_null() {
+                    (*lastPage).next = page;
+                } else {
+                    (*self_0).pages = page;
+                }
+                lastPage = page;
+
+                // create region and link regions
+                let mut region: *mut spAtlasRegion = spAtlasRegion_create();
+                if !lastRegion.is_null() {
+                    (*lastRegion).next = region;
+                } else {
+                    (*self_0).regions = region;
+                }
+                lastRegion = region;
+                (*region).page = page;
+                (*region).name = region_name.as_ptr();
+
+                // init region
+                (*region).x = 0;
+                (*region).y = 0;
+
+                // (*region).width = width as i32;
+                // (*region).height = height as i32;
+                // (*region).u = 0.0;
+                // (*region).v = 0.0;
+                // (*region).u2 = 1.0;
+                // (*region).v2 = 1.0;
+                // (*region).offsetX = 0;
+                // (*region).offsetY = 0;
+                // (*region).originalWidth = width as i32;
+                // (*region).originalHeight = height as i32;
+                (*region).super_0.width = width as i32;
+                (*region).super_0.height = height as i32;
+                (*region).super_0.u = 0.0;
+                (*region).super_0.v = 0.0;
+                (*region).super_0.u2 = 1.0;
+                (*region).super_0.v2 = 1.0;
+                (*region).super_0.offsetX = 0.0;
+                (*region).super_0.offsetY = 0.0;
+                (*region).super_0.originalWidth = width as i32;
+                (*region).super_0.originalHeight = height as i32;
+
+                (*region).index = index;
+                // (*region).degrees = 0;
+                // (*region).rotate = 0;
+                (*region).super_0.degrees = 0;
+
+                index += 1;
+            }
+        })
+    });
+
+    let imgs_ptr: *mut HashMap<String, image::DynamicImage> = Box::into_raw(Box::new(imgs));
+
+    AtlasAndImages {
+        atlas: self_0,
+        imgs: imgs_ptr,
+    }
+}
