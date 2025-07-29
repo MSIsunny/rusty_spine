@@ -10929,21 +10929,21 @@ unsafe extern "C" fn loadSequence(
 pub unsafe extern "C" fn createAttachment_empty(name: *const i8) -> *mut spAttachment {
     let attachment = spRegionAttachment_create(name);
     (*attachment).rendererObject = std::ptr::null_mut();
-    let mut region: *mut spAtlasRegion = spAtlasRegion_create();
+    // let mut region: *mut spAtlasRegion = spAtlasRegion_create();
 
-    (*region).super_0.width = 0;
-    (*region).super_0.height = 0;
-    (*region).super_0.u = 0.0;
-    (*region).super_0.v = 0.0;
-    (*region).super_0.u2 = 1.0;
-    (*region).super_0.v2 = 1.0;
-    (*region).super_0.offsetX = 0.0;
-    (*region).super_0.offsetY = 0.0;
-    (*region).super_0.originalWidth = 0;
-    (*region).super_0.originalHeight = 0;
-    (*region).super_0.degrees = 0;
+    // (*region).super_0.width = 0;
+    // (*region).super_0.height = 0;
+    // (*region).super_0.u = 0.0;
+    // (*region).super_0.v = 0.0;
+    // (*region).super_0.u2 = 1.0;
+    // (*region).super_0.v2 = 1.0;
+    // (*region).super_0.offsetX = 0.0;
+    // (*region).super_0.offsetY = 0.0;
+    // (*region).super_0.originalWidth = 0;
+    // (*region).super_0.originalHeight = 0;
+    // (*region).super_0.degrees = 0;
 
-    (*attachment).region = &mut (*region).super_0;
+    // (*attachment).region = &mut (*region).super_0;
     return &mut (*attachment).super_0;
 }
 
@@ -28315,7 +28315,8 @@ pub struct AtlasAndImages {
 pub unsafe extern "C" fn spAtlas_create_from_folder(dir: &String) -> AtlasAndImages {
     use image::GenericImageView;
 
-    let self_0 = _spCalloc(
+    let mut self_0: *mut spAtlas = std::ptr::null_mut::<spAtlas>();
+    self_0 = _spCalloc(
         1 as c_int as size_t,
         ::core::mem::size_of::<spAtlas>() as c_ulong,
         (b"spine.c\0" as *const u8).cast::<c_char>(),
@@ -28324,8 +28325,8 @@ pub unsafe extern "C" fn spAtlas_create_from_folder(dir: &String) -> AtlasAndIma
 
     (*self_0).rendererObject = std::ptr::null_mut();
 
-    let mut lastPage: *mut spAtlasPage = 0 as *mut spAtlasPage;
-    let mut lastRegion: *mut spAtlasRegion = 0 as *mut spAtlasRegion;
+    let mut lastPage: *mut spAtlasPage = std::ptr::null_mut::<spAtlasPage>();
+    let mut lastRegion: *mut spAtlasRegion = std::ptr::null_mut::<spAtlasRegion>();
 
     let mut index = 0;
     let mut imgs: HashMap<String, image::DynamicImage> = HashMap::new();
@@ -28374,7 +28375,17 @@ pub unsafe extern "C" fn spAtlas_create_from_folder(dir: &String) -> AtlasAndIma
                 }
                 lastRegion = region;
                 (*region).page = page;
-                (*region).name = region_name.as_ptr();
+
+                let name = _spMalloc(
+                    (::core::mem::size_of::<c_char>() as c_ulong)
+                        .wrapping_mul((spine_strlen(region_name.as_ptr())).wrapping_add(1 as c_int as c_ulong)),
+                    (b"spine.c\0" as *const u8).cast::<c_char>(),
+                    4283 as c_int,
+                )
+                .cast::<c_char>();
+                spine_strcpy(name, region_name.as_ptr());
+
+                (*region).name = name;
 
                 // init region
                 (*region).x = 0;
