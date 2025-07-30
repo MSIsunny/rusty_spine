@@ -22400,7 +22400,7 @@ unsafe extern "C" fn _spSkeletonJson_readAnimation(
                         );
                         let mut value: *const c_char = Json_getString(
                             keyMap,
-                            (b"value\0" as *const u8).cast::<c_char>(),
+                            (b"inherit\0" as *const u8).cast::<c_char>(),
                             (b"normal\0" as *const u8).cast::<c_char>(),
                         );
                         let mut inherit: spInherit = SP_INHERIT_NORMAL;
@@ -28316,7 +28316,8 @@ pub unsafe extern "C" fn spAtlas_create_from_folder(dir: &String) -> AtlasAndIma
         ::core::mem::size_of::<spAtlas>() as c_ulong,
         (b"spine.c\0" as *const u8).cast::<c_char>(),
         4468 as c_int,
-    ).cast::<spAtlas>();
+    )
+    .cast::<spAtlas>();
 
     (*self_0).rendererObject = std::ptr::null_mut();
 
@@ -28364,8 +28365,9 @@ pub unsafe extern "C" fn spAtlas_create_from_folder(dir: &String) -> AtlasAndIma
         (*region).page = page;
 
         let name = _spMalloc(
-            (::core::mem::size_of::<c_char>() as c_ulong)
-                .wrapping_mul((spine_strlen(region_name.as_ptr())).wrapping_add(1 as c_int as c_ulong)),
+            (::core::mem::size_of::<c_char>() as c_ulong).wrapping_mul(
+                (spine_strlen(region_name.as_ptr())).wrapping_add(1 as c_int as c_ulong),
+            ),
             (b"spine.c\0" as *const u8).cast::<c_char>(),
             4283 as c_int,
         )
