@@ -11444,7 +11444,15 @@ pub unsafe extern "C" fn spBone_updateWorldTransformWith(
             let mut za: c_float = (pa * cosine + pb * sine) / sx;
             let mut zc: c_float = (pc * cosine + pd * sine) / sy;
             let mut s_0: c_float = spine_sqrtf(za * za + zc * zc);
-            if (*(*self_0).data).inherit as c_uint == SP_INHERIT_NOSCALE as c_int as c_uint
+            // fix SP_INHERIT_NOSCALE
+            if s_0 as c_double > 0.00001f64 {
+                s_0 = 1 as c_int as c_float / s_0;
+            }
+            za *= s_0;
+            zc *= s_0;
+            s_0 = spine_sqrtf(za * za + zc * zc);
+            // fix inherit
+            if (*self_0).inherit as c_uint == SP_INHERIT_NOSCALE as c_int as c_uint
                 && (pa * pd - pb * pc < 0 as c_int as c_float) as c_int
                     != ((sx < 0 as c_int as c_float) as c_int
                         != (sy < 0 as c_int as c_float) as c_int) as c_int
@@ -22431,6 +22439,7 @@ unsafe extern "C" fn _spSkeletonJson_readAnimation(
                         {
                             inherit = SP_INHERIT_NOSCALEORREFLECTION;
                         }
+                        println!("inherit: {}", inherit);
                         spInheritTimeline_setFrame(timeline_13, frame, time_3, inherit);
                         nextMap = (*keyMap).next;
                         if nextMap.is_null() {
