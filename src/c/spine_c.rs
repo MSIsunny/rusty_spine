@@ -22439,7 +22439,7 @@ unsafe extern "C" fn _spSkeletonJson_readAnimation(
                         {
                             inherit = SP_INHERIT_NOSCALEORREFLECTION;
                         }
-                        println!("inherit: {}", inherit);
+                        // println!("inherit: {}", inherit);
                         spInheritTimeline_setFrame(timeline_13, frame, time_3, inherit);
                         nextMap = (*keyMap).next;
                         if nextMap.is_null() {
