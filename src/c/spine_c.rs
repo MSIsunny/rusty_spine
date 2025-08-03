@@ -22439,12 +22439,12 @@ unsafe extern "C" fn _spSkeletonJson_readAnimation(
                         {
                             inherit = SP_INHERIT_NOSCALEORREFLECTION;
                         }
-                        // println!("inherit: {}", inherit);
                         spInheritTimeline_setFrame(timeline_13, frame, time_3, inherit);
                         nextMap = (*keyMap).next;
                         if nextMap.is_null() {
                             break;
                         }
+                        keyMap = nextMap;
                         frame += 1;
                     }
                     spTimelineArray_add(timelines, &mut (*timeline_13).super_0);
